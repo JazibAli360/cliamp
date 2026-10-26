@@ -264,6 +264,7 @@ eq = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 # [netease]
 # enabled = true
 # cookies_from = "chrome"
+# cookies_file = "/path/to/cookies.txt"
 # user_id = "optional-account-user-id"
 
 # ---

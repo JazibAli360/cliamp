@@ -135,6 +135,27 @@ func TestCookieHeaderFromNetscapeFileFiltersNetEaseCookies(t *testing.T) {
 	}
 }
 
+func TestCookieHeaderFromNetscapeFileSkipsExpiredCookies(t *testing.T) {
+	path := t.TempDir() + "/cookies.txt"
+	data := strings.Join([]string{
+		".music.163.com\tTRUE\t/\tTRUE\t1\tMUSIC_U\tstale",
+		".music.163.com\tTRUE\t/\tTRUE\t4102444800\tMUSIC_U\tfresh",
+		".163.com\tTRUE\t/\tTRUE\t0\t__csrf\tsession",
+		".163.com\tTRUE\t/\tTRUE\t0\t__csrf\tsecond",
+		"",
+	}, "\n")
+	if err := osWriteFile(path, data); err != nil {
+		t.Fatal(err)
+	}
+	header, err := cookieHeaderFromNetscapeFile(path)
+	if err != nil {
+		t.Fatalf("cookieHeaderFromNetscapeFile() error = %v", err)
+	}
+	if want := "MUSIC_U=fresh; __csrf=session"; header != want {
+		t.Fatalf("header = %q, want %q", header, want)
+	}
+}
+
 func TestAccountReadsCookiesFileWithoutYTDLP(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 	path := t.TempDir() + "/cookies.txt"

@@ -502,6 +502,9 @@ func fileCookieHeader(path string) (string, error) {
 	return header, nil
 }
 
+// cookieHeaderFromNetscapeFile builds a Cookie header from the NetEase cookies
+// in a Netscape cookies file. Expired entries are skipped before the first
+// entry of each name is kept.
 func cookieHeaderFromNetscapeFile(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -509,6 +512,7 @@ func cookieHeaderFromNetscapeFile(path string) (string, error) {
 	}
 	defer f.Close()
 
+	now := time.Now().Unix()
 	seen := map[string]bool{}
 	var pairs []string
 	scanner := bufio.NewScanner(f)
@@ -523,6 +527,10 @@ func cookieHeaderFromNetscapeFile(path string) (string, error) {
 		}
 		domain := strings.TrimPrefix(fields[0], "#HttpOnly_")
 		if !isNetEaseCookieDomain(domain) {
+			continue
+		}
+		// 0 marks a session cookie, which does not expire.
+		if expires, err := strconv.ParseInt(fields[4], 10, 64); err == nil && expires != 0 && expires <= now {
 			continue
 		}
 		name := fields[5]
